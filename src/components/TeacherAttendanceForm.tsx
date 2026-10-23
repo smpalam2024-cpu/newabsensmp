@@ -84,14 +84,14 @@ export const TeacherAttendanceForm: React.FC<TeacherAttendanceFormProps> = ({
   const handleSetStatus = (teacherId: string, status: AttendanceStatus) => {
     setEntries((prev) => {
       const existing = prev[teacherId];
-      const defaultTime = status === 'hadir' ? '06:50' : status === 'terlambat' ? '07:20' : undefined;
+      const defaultTime = status === 'hadir' ? '07:15' : status === 'terlambat' ? '07:45' : undefined;
       return {
         ...prev,
         [teacherId]: {
           teacherId,
           status,
           checkInTime: existing?.checkInTime || defaultTime,
-          checkOutTime: existing?.checkOutTime || (status === 'hadir' || status === 'terlambat' ? '14:30' : undefined),
+          checkOutTime: existing?.checkOutTime || (status === 'hadir' || status === 'terlambat' ? '15:00' : undefined),
           note: existing?.note || '',
           recordedAt: new Date().toISOString(),
         },
@@ -125,8 +125,8 @@ export const TeacherAttendanceForm: React.FC<TeacherAttendanceFormProps> = ({
       updated[t.id] = {
         teacherId: t.id,
         status: 'hadir',
-        checkInTime: entries[t.id]?.checkInTime || '06:50',
-        checkOutTime: entries[t.id]?.checkOutTime || '14:30',
+        checkInTime: entries[t.id]?.checkInTime || '07:15',
+        checkOutTime: entries[t.id]?.checkOutTime || '15:00',
         note: entries[t.id]?.note || '',
         recordedAt: now,
       };

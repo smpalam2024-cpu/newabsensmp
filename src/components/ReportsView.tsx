@@ -12,6 +12,8 @@ import {
   FileText,
   UserCheck,
   ChevronDown,
+  Eye,
+  Award,
 } from 'lucide-react';
 import {
   AttendanceRecord,
@@ -19,8 +21,11 @@ import {
   SchoolClass,
   Student,
   User,
+  Teacher,
+  TeacherAttendanceRecord,
 } from '../types';
-import { STATUS_CONFIG } from '../data/initialData';
+import { STATUS_CONFIG, SCHOOL_INFO } from '../data/initialData';
+import { IndividualRekapModal } from './IndividualRekapModal';
 import {
   getAllAttendanceRecords,
   getAllClasses,
@@ -66,6 +71,10 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
 
   const [searchStudent, setSearchStudent] = useState('');
   const [activeTab, setActiveTab] = useState<'records' | 'students' | 'teachers'>('records');
+
+  // Individual Rekap Modal selection
+  const [selectedStudentForRekap, setSelectedStudentForRekap] = useState<Student | null>(null);
+  const [selectedTeacherForRekap, setSelectedTeacherForRekap] = useState<Teacher | null>(null);
 
   // Filtered records
   const filteredRecords = useMemo(() => {
@@ -554,13 +563,14 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                   <th className="p-3.5 text-center">Izin</th>
                   <th className="p-3.5 text-center">Sakit</th>
                   <th className="p-3.5 text-center">Alpa</th>
-                  <th className="p-3.5 text-right">% Kehadiran</th>
+                  <th className="p-3.5 text-center">% Kehadiran</th>
+                  <th className="p-3.5 text-center">Rekap Individual</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {studentStats.length === 0 ? (
                   <tr>
-                    <td colSpan={9} className="p-8 text-center text-slate-400">
+                    <td colSpan={10} className="p-8 text-center text-slate-400">
                       Tidak ada data siswa ditemukan.
                     </td>
                   </tr>
@@ -575,12 +585,22 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                       <td className="p-3.5 text-center font-bold text-blue-600">{row.izin}</td>
                       <td className="p-3.5 text-center font-bold text-purple-600">{row.sakit}</td>
                       <td className="p-3.5 text-center font-bold text-rose-600">{row.alpa}</td>
-                      <td className="p-3.5 text-right font-bold text-slate-900">
+                      <td className="p-3.5 text-center font-bold text-slate-900">
                         <span className={`px-2 py-0.5 rounded ${
                           row.rate >= 85 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                         }`}>
                           {row.rate}%
                         </span>
+                      </td>
+                      <td className="p-3.5 text-center">
+                        <button
+                          onClick={() => setSelectedStudentForRekap(row.student)}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-blue-50 hover:bg-blue-100 text-blue-700 font-bold text-xs transition border border-blue-200 cursor-pointer shadow-2xs"
+                          title={`Lihat rekapitulasi kehadiran lengkap ${row.student.name}`}
+                        >
+                          <Eye className="w-3.5 h-3.5" />
+                          <span>Lihat Rekap</span>
+                        </button>
                       </td>
                     </tr>
                   ))
@@ -616,7 +636,8 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                   <th className="p-3.5 text-center">Izin</th>
                   <th className="p-3.5 text-center">Sakit</th>
                   <th className="p-3.5 text-center">Alpa</th>
-                  <th className="p-3.5 text-right">% Kehadiran</th>
+                  <th className="p-3.5 text-center">% Kehadiran</th>
+                  <th className="p-3.5 text-center">Rekap Guru</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
@@ -640,12 +661,22 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
                     <td className="p-3.5 text-center font-bold text-blue-600">{row.izin}</td>
                     <td className="p-3.5 text-center font-bold text-purple-600">{row.sakit}</td>
                     <td className="p-3.5 text-center font-bold text-rose-600">{row.alpa}</td>
-                    <td className="p-3.5 text-right font-bold text-slate-900">
+                    <td className="p-3.5 text-center font-bold text-slate-900">
                       <span className={`px-2 py-0.5 rounded ${
                         row.rate >= 85 ? 'bg-emerald-50 text-emerald-700' : 'bg-amber-50 text-amber-700'
                       }`}>
                         {row.rate}%
                       </span>
+                    </td>
+                    <td className="p-3.5 text-center">
+                      <button
+                        onClick={() => setSelectedTeacherForRekap(row.teacher)}
+                        className="inline-flex items-center gap-1 px-2.5 py-1 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 font-bold text-xs transition border border-indigo-200 cursor-pointer shadow-2xs"
+                        title={`Lihat rekapitulasi kehadiran lengkap ${row.teacher.name}`}
+                      >
+                        <Eye className="w-3.5 h-3.5" />
+                        <span>Lihat Rekap</span>
+                      </button>
                     </td>
                   </tr>
                 ))}
@@ -653,6 +684,33 @@ export const ReportsView: React.FC<ReportsViewProps> = ({
             </table>
           </div>
         </div>
+      )}
+
+      {/* Individual Student Rekap Modal */}
+      {selectedStudentForRekap && (
+        <IndividualRekapModal
+          isOpen={!!selectedStudentForRekap}
+          onClose={() => setSelectedStudentForRekap(null)}
+          type="student"
+          student={selectedStudentForRekap}
+          studentClass={classes.find((c) => c.id === selectedStudentForRekap.classId)}
+          allSessions={sessions}
+          allStudentRecords={records}
+          allTeacherRecords={teacherRecords}
+        />
+      )}
+
+      {/* Individual Teacher Rekap Modal */}
+      {selectedTeacherForRekap && (
+        <IndividualRekapModal
+          isOpen={!!selectedTeacherForRekap}
+          onClose={() => setSelectedTeacherForRekap(null)}
+          type="teacher"
+          teacher={selectedTeacherForRekap}
+          allSessions={sessions}
+          allStudentRecords={records}
+          allTeacherRecords={teacherRecords}
+        />
       )}
     </div>
   );

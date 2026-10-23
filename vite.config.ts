@@ -14,9 +14,9 @@ export default defineConfig(() => {
         includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'icon.svg'],
         manifest: {
           id: '/',
-          name: 'Absensi Siswa PWA - SMP Alam Excellentia Pamekasan',
-          short_name: 'SAE Absensi',
-          description: 'Aplikasi Absensi Siswa PWA SMP Alam Excellentia Pamekasan (Jl. Lawangan Daya No 114 Pademawu, Pamekasan).',
+          name: 'ABDI SMP SAE - Absensi Digital SMP Alam Excellentia Pamekasan',
+          short_name: 'ABDI SMP SAE',
+          description: 'Aplikasi Absensi Digital Siswa dan Dewan Guru SMP Alam Excellentia Pamekasan (Jl. Lawangan Daya No 114 Pademawu, Pamekasan).',
           theme_color: '#1e40af',
           background_color: '#f8fafc',
           display: 'standalone',

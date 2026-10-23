@@ -406,7 +406,7 @@ export const AttendanceForm: React.FC<AttendanceFormProps> = ({
             >
               {sessions.map((ses) => (
                 <option key={ses.id} value={ses.id}>
-                  {ses.name}
+                  {ses.name} — {ses.timeRange}
                 </option>
               ))}
             </select>

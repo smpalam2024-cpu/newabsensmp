@@ -14,10 +14,15 @@ import {
   AlertCircle,
   Menu,
   X,
+  KeyRound,
+  ShieldCheck,
+  Lock,
 } from 'lucide-react';
 import { User } from '../types';
 import { getAllUsers, setCurrentUser } from '../services/storageService';
 import { PWAInstallButton } from './PWAInstallButton';
+import { LoginModal } from './LoginModal';
+import { SCHOOL_INFO } from '../data/initialData';
 
 interface NavbarProps {
   currentUser: User;
@@ -45,6 +50,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const allUsers = getAllUsers();
   const [showRoleMenu, setShowRoleMenu] = useState(false);
   const [showMobileNav, setShowMobileNav] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
 
   const handleSwitchUser = (user: User) => {
     setCurrentUser(user);
@@ -65,14 +71,14 @@ export const Navbar: React.FC<NavbarProps> = ({
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-extrabold text-sm sm:text-base text-slate-900 leading-none tracking-tight">
-                  SMP ALAM EXCELLENTIA
+                  ABDI SMP SAE
                 </h1>
                 <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-100 text-blue-800 uppercase tracking-wider">
                   PWA
                 </span>
               </div>
               <p className="text-[11px] text-slate-500 hidden sm:block mt-0.5 font-medium truncate max-w-sm">
-                Jl. Lawangan Daya No 114 Pademawu, Pamekasan
+                SMP ALAM EXCELLENTIA • Pademawu, Pamekasan
               </p>
             </div>
           </div>
@@ -199,13 +205,36 @@ export const Navbar: React.FC<NavbarProps> = ({
               {/* Role Dropdown Menu */}
               {showRoleMenu && (
                 <div className="absolute right-0 mt-2 w-72 bg-white rounded-2xl shadow-xl border border-slate-200 py-2 z-50 animate-in fade-in">
-                  <div className="px-3.5 py-2 border-b border-slate-100">
+                  <div className="px-3.5 py-2 border-b border-slate-100 flex items-center justify-between">
                     <span className="text-[10px] font-bold uppercase tracking-wider text-slate-400">
-                      Ganti Akun & Hak Akses (PRD 2)
+                      Ganti Akun & Hak Akses
                     </span>
+                    <button
+                      onClick={() => {
+                        setShowRoleMenu(false);
+                        setShowLoginModal(true);
+                      }}
+                      className="text-[10px] font-bold text-blue-600 hover:text-blue-800 flex items-center gap-1 cursor-pointer"
+                    >
+                      <KeyRound className="w-3 h-3" />
+                      <span>Form Login</span>
+                    </button>
                   </div>
 
-                  <div className="divide-y divide-slate-50">
+                  <div className="p-2 border-b border-slate-100">
+                    <button
+                      onClick={() => {
+                        setShowRoleMenu(false);
+                        setShowLoginModal(true);
+                      }}
+                      className="w-full py-2 px-3 rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold text-xs shadow-xs transition flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      <ShieldCheck className="w-4 h-4" />
+                      <span>Login Admin Utama (Password)</span>
+                    </button>
+                  </div>
+
+                  <div className="divide-y divide-slate-50 max-h-64 overflow-y-auto">
                     {allUsers.map((u) => {
                       const isCurrent = u.id === currentUser.id;
                       return (
@@ -310,6 +339,14 @@ export const Navbar: React.FC<NavbarProps> = ({
           </div>
         )}
       </header>
+
+      {/* Login Modal */}
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        currentUser={currentUser}
+        onLoginSuccess={() => setShowLoginModal(false)}
+      />
     </>
   );
 };

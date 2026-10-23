@@ -48,6 +48,8 @@ export interface Session {
   name: string;
   code: string;
   timeRange: string;
+  startTime?: string;
+  endTime?: string;
 }
 
 export type SyncStatus = 'synced' | 'pending_sync' | 'local_saved' | 'conflict' | 'failed';

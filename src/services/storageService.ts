@@ -16,23 +16,26 @@ import {
   INITIAL_USERS,
   INITIAL_SESSIONS,
   INITIAL_TEACHERS,
+  SCHOOL_INFO,
+  DEFAULT_ADMIN_CREDENTIALS,
   getInitialAttendanceRecords,
   getInitialTeacherAttendanceRecords,
 } from '../data/initialData';
 
 const STORAGE_KEYS = {
-  USERS: 'absensi_sae_pamekasan_users_v3',
-  CURRENT_USER: 'absensi_sae_pamekasan_current_user_v3',
-  CLASSES: 'absensi_sae_pamekasan_classes_v3',
-  STUDENTS: 'absensi_sae_pamekasan_students_v3',
-  TEACHERS: 'absensi_sae_pamekasan_teachers_v3',
-  SESSIONS: 'absensi_sae_pamekasan_sessions_v3',
-  ATTENDANCE: 'absensi_sae_pamekasan_attendance_records_v3',
-  SERVER_ATTENDANCE: 'absensi_sae_pamekasan_server_attendance_records_v3',
-  TEACHER_ATTENDANCE: 'absensi_sae_pamekasan_teacher_attendance_v3',
-  SERVER_TEACHER_ATTENDANCE: 'absensi_sae_pamekasan_server_teacher_attendance_v3',
-  AUDIT_LOGS: 'absensi_sae_pamekasan_audit_logs_v3',
-  FORCE_OFFLINE: 'absensi_sae_pamekasan_force_offline_sim_v3',
+  SCHOOL_INFO: 'absensi_sae_pamekasan_school_info_v4',
+  USERS: 'absensi_sae_pamekasan_users_v4',
+  CURRENT_USER: 'absensi_sae_pamekasan_current_user_v4',
+  CLASSES: 'absensi_sae_pamekasan_classes_v4',
+  STUDENTS: 'absensi_sae_pamekasan_students_v4',
+  TEACHERS: 'absensi_sae_pamekasan_teachers_v4',
+  SESSIONS: 'absensi_sae_pamekasan_sessions_v4',
+  ATTENDANCE: 'absensi_sae_pamekasan_attendance_records_v4',
+  SERVER_ATTENDANCE: 'absensi_sae_pamekasan_server_attendance_records_v4',
+  TEACHER_ATTENDANCE: 'absensi_sae_pamekasan_teacher_attendance_v4',
+  SERVER_TEACHER_ATTENDANCE: 'absensi_sae_pamekasan_server_teacher_attendance_v4',
+  AUDIT_LOGS: 'absensi_sae_pamekasan_audit_logs_v4',
+  FORCE_OFFLINE: 'absensi_sae_pamekasan_force_offline_sim_v4',
 };
 
 // Event emitter helper for cross-component reactivity
@@ -75,6 +78,9 @@ function setItem<T>(key: string, value: T): void {
 export function initializeStorage() {
   if (typeof window === 'undefined') return;
 
+  if (!localStorage.getItem(STORAGE_KEYS.SCHOOL_INFO)) {
+    setItem(STORAGE_KEYS.SCHOOL_INFO, SCHOOL_INFO);
+  }
   if (!localStorage.getItem(STORAGE_KEYS.USERS)) {
     setItem(STORAGE_KEYS.USERS, INITIAL_USERS);
   }
@@ -589,8 +595,174 @@ export function deleteStudent(studentId: string): void {
   notifyDataChanged();
 }
 
+// School Info & Academic Year
+export function getSchoolInfo(): typeof SCHOOL_INFO {
+  return getItem<typeof SCHOOL_INFO>(STORAGE_KEYS.SCHOOL_INFO, SCHOOL_INFO);
+}
+
+export function updateSchoolInfo(patch: Partial<typeof SCHOOL_INFO>): void {
+  const current = getSchoolInfo();
+  const updated = { ...current, ...patch };
+  setItem(STORAGE_KEYS.SCHOOL_INFO, updated);
+  notifyDataChanged();
+}
+
+// Admin Authentication & Login
+export function loginAdmin(
+  identifier: string,
+  pass: string
+): { success: boolean; user?: User; message?: string } {
+  const cleanId = identifier.trim().toLowerCase();
+  const cleanPass = pass.trim();
+
+  const isMatch =
+    (cleanId === DEFAULT_ADMIN_CREDENTIALS.email.toLowerCase() ||
+      cleanId === DEFAULT_ADMIN_CREDENTIALS.alternateEmail.toLowerCase() ||
+      cleanId === DEFAULT_ADMIN_CREDENTIALS.username.toLowerCase()) &&
+    cleanPass === DEFAULT_ADMIN_CREDENTIALS.password;
+
+  if (isMatch) {
+    const allUsers = getAllUsers();
+    let adminUser = allUsers.find((u) => u.role === 'admin');
+    if (!adminUser) {
+      adminUser = INITIAL_USERS.find((u) => u.role === 'admin') || INITIAL_USERS[5];
+    }
+    setCurrentUser(adminUser);
+    addAuditLog({
+      id: `log-login-${Date.now()}`,
+      timestamp: new Date().toISOString(),
+      userId: adminUser.id,
+      userName: adminUser.name,
+      userRole: 'admin',
+      action: 'UPDATE',
+      className: 'Semua Kelas',
+      date: new Date().toISOString().split('T')[0],
+      sessionName: 'Sistem',
+      details: 'Administrator Utama berhasil login ke sistem ABDI SMP SAE.',
+    });
+    return { success: true, user: adminUser };
+  }
+
+  // Teacher fallback login with NIP/email
+  const allUsers = getAllUsers();
+  const teacherUser = allUsers.find(
+    (u) =>
+      u.email.toLowerCase() === cleanId ||
+      u.nip.replace(/\s+/g, '') === cleanId.replace(/\s+/g, '')
+  );
+  if (teacherUser && (cleanPass === 'guru123' || cleanPass === 'admin123')) {
+    setCurrentUser(teacherUser);
+    return { success: true, user: teacherUser };
+  }
+
+  return {
+    success: false,
+    message: 'Username/Email atau Password tidak cocok. Silakan gunakan kredensial admin yang tertera.',
+  };
+}
+
+export function logoutCurrentUser(): void {
+  setCurrentUser(INITIAL_USERS[0]);
+}
+
+// Session (Jam Sekolah) Management
+export function updateSession(session: Session): void {
+  const sessions = getAllSessions();
+  const idx = sessions.findIndex((s) => s.id === session.id);
+  if (idx >= 0) {
+    sessions[idx] = session;
+    setItem(STORAGE_KEYS.SESSIONS, sessions);
+    notifyDataChanged();
+  }
+}
+
+export function addSession(session: Omit<Session, 'id'>): Session {
+  const sessions = getAllSessions();
+  const newSession: Session = {
+    ...session,
+    id: `sesi-${Date.now()}`,
+  };
+  sessions.push(newSession);
+  setItem(STORAGE_KEYS.SESSIONS, sessions);
+  notifyDataChanged();
+  return newSession;
+}
+
+export function deleteSession(sessionId: string): void {
+  const sessions = getAllSessions().filter((s) => s.id !== sessionId);
+  setItem(STORAGE_KEYS.SESSIONS, sessions);
+  notifyDataChanged();
+}
+
+// Teacher Management
+export function updateTeacher(teacher: Teacher): void {
+  const teachers = getAllTeachers();
+  const idx = teachers.findIndex((t) => t.id === teacher.id);
+  if (idx >= 0) {
+    teachers[idx] = teacher;
+    setItem(STORAGE_KEYS.TEACHERS, teachers);
+    // Also sync in users list if teacher has a user account
+    const users = getAllUsers();
+    const uIdx = users.findIndex((u) => u.nip.replace(/\s+/g, '') === teacher.nip.replace(/\s+/g, ''));
+    if (uIdx >= 0) {
+      users[uIdx].name = teacher.name;
+      users[uIdx].email = teacher.email;
+      setItem(STORAGE_KEYS.USERS, users);
+    }
+    notifyDataChanged();
+  }
+}
+
+export function addTeacher(teacher: Omit<Teacher, 'id'>): Teacher {
+  const teachers = getAllTeachers();
+  const newTeacher: Teacher = {
+    ...teacher,
+    id: `tch-${Date.now()}`,
+  };
+  teachers.push(newTeacher);
+  setItem(STORAGE_KEYS.TEACHERS, teachers);
+  notifyDataChanged();
+  return newTeacher;
+}
+
+export function deleteTeacher(teacherId: string): void {
+  const teachers = getAllTeachers().filter((t) => t.id !== teacherId);
+  setItem(STORAGE_KEYS.TEACHERS, teachers);
+  notifyDataChanged();
+}
+
+// Class Management
+export function updateClass(cls: SchoolClass): void {
+  const classes = getAllClasses();
+  const idx = classes.findIndex((c) => c.id === cls.id);
+  if (idx >= 0) {
+    classes[idx] = cls;
+    setItem(STORAGE_KEYS.CLASSES, classes);
+    notifyDataChanged();
+  }
+}
+
+export function addClass(cls: Omit<SchoolClass, 'id'>): SchoolClass {
+  const classes = getAllClasses();
+  const newClass: SchoolClass = {
+    ...cls,
+    id: `cls-${Date.now()}`,
+  };
+  classes.push(newClass);
+  setItem(STORAGE_KEYS.CLASSES, classes);
+  notifyDataChanged();
+  return newClass;
+}
+
+export function deleteClass(classId: string): void {
+  const classes = getAllClasses().filter((c) => c.id !== classId);
+  setItem(STORAGE_KEYS.CLASSES, classes);
+  notifyDataChanged();
+}
+
 // Reset data to initial state for easy testing
 export function resetToDemoData(): void {
+  setItem(STORAGE_KEYS.SCHOOL_INFO, SCHOOL_INFO);
   setItem(STORAGE_KEYS.USERS, INITIAL_USERS);
   setItem(STORAGE_KEYS.CURRENT_USER, INITIAL_USERS[0]);
   setItem(STORAGE_KEYS.CLASSES, INITIAL_CLASSES);

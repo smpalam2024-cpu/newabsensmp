@@ -2,7 +2,8 @@ import { SchoolClass, Student, User, Session, AttendanceRecord, Teacher, Teacher
 
 export const SCHOOL_INFO = {
   name: 'SMP ALAM EXCELLENTIA PAMEKASAN',
-  shortName: 'SMP Alam Excellentia',
+  appName: 'ABDI SMP SAE',
+  shortName: 'ABDI SMP SAE',
   tagline: 'Sekolah Menengah Pertama Alam Berkarakter & Unggul',
   address: 'Jl. Lawangan Daya No 114 Pademawu, Pamekasan',
   logoUrl: '/assets/aistudio/1713909500616_5b14171f.png',
@@ -10,11 +11,20 @@ export const SCHOOL_INFO = {
   npsn: '699xxxxx',
 };
 
+// Kredensial Akun Login Admin Utama SMP Alam Excellentia
+export const DEFAULT_ADMIN_CREDENTIALS = {
+  email: 'admin@smpsae.sch.id',
+  alternateEmail: 'smpalam2024@gmail.com',
+  username: 'admin',
+  password: 'admin123',
+};
+
 // Daftar 5 Guru & Tenaga Pendidik SMP Alam Excellentia Pamekasan
+// Sesuai aturan: Huruf kapital semua KECUALI di gelarnya (seperti M.Pd / S.Mat / S.Pd)
 export const INITIAL_TEACHERS: Teacher[] = [
   {
     id: 'tch-01',
-    name: 'Shohibul Kahfi, M.Pd',
+    name: 'SHOHIBUL KAHFI, M.Pd',
     nip: '19820514 200604 1 001',
     roleTitle: 'Kepala Sekolah',
     phone: '081234560001',
@@ -50,7 +60,7 @@ export const INITIAL_TEACHERS: Teacher[] = [
   },
   {
     id: 'tch-05',
-    name: 'Zahra Najma Atika',
+    name: 'ZAHRA NAJMA ATIKA',
     nip: '19960312 202102 2 010',
     roleTitle: 'Guru Pembina Alam & Ekstrakurikuler',
     phone: '081234560005',
@@ -89,16 +99,16 @@ export const INITIAL_USERS: User[] = [
   },
   {
     id: 'user-guru-zahra',
-    name: 'Zahra Najma Atika',
+    name: 'ZAHRA NAJMA ATIKA',
     nip: '19960312 202102 2 010',
     role: 'guru',
-    roleLabel: 'Guru Pembina Alam',
+    roleLabel: 'Guru Pembina Alam & Ekstrakurikuler',
     assignedClassIds: ['cls-7-alkhawarizmi', 'cls-8-albatenius', 'cls-9-avicena'],
     email: 'zahra.najma@smpalam-excellentia.sch.id',
   },
   {
     id: 'user-kepsek-shohibul',
-    name: 'Shohibul Kahfi, M.Pd',
+    name: 'SHOHIBUL KAHFI, M.Pd',
     nip: '19820514 200604 1 001',
     role: 'kepala_sekolah',
     roleLabel: 'Kepala Sekolah',
@@ -107,12 +117,12 @@ export const INITIAL_USERS: User[] = [
   },
   {
     id: 'user-admin',
-    name: 'Petugas Administrasi / TU',
+    name: 'ADMINISTRATOR UTAMA',
     nip: '19940715 202001 1 009',
     role: 'admin',
-    roleLabel: 'Petugas Tata Usaha & Absensi',
+    roleLabel: 'Petugas Tata Usaha & Administrator Utama',
     assignedClassIds: ['cls-7-alkhawarizmi', 'cls-8-albatenius', 'cls-9-avicena'],
-    email: 'admin@smpalam-excellentia.sch.id',
+    email: 'admin@smpsae.sch.id',
   },
 ];
 
@@ -143,10 +153,44 @@ export const INITIAL_CLASSES: SchoolClass[] = [
   },
 ];
 
+// Jam sekolah sesuai instruksi:
+// Sesi pagi jam ke 1-3 (07:30-09:45 wib)
+// Sesi siang jam ke 4-5 (10:15-12:00 wib)
+// Sesi sore jam ke 6-7 dan ekstrakurikuler (12:30-15:00 wib)
+// dan absensi harian terpadu
 export const INITIAL_SESSIONS: Session[] = [
-  { id: 'sesi-pagi', name: 'Sesi Pagi / Apel & Jam 1-2', code: 'SESI-1', timeRange: '07:00 - 08:30 WIB' },
-  { id: 'sesi-siang', name: 'Sesi Siang / Jam 5-6', code: 'SESI-2', timeRange: '10:30 - 12:00 WIB' },
-  { id: 'sesi-harian', name: 'Absensi Harian Terpadu', code: 'HARIAN', timeRange: 'Sepanjang Hari Sekolah' },
+  {
+    id: 'sesi-pagi',
+    name: 'Sesi Pagi (Jam 1-3)',
+    code: 'SESI-1',
+    timeRange: '07:30 - 09:45 WIB',
+    startTime: '07:30',
+    endTime: '09:45',
+  },
+  {
+    id: 'sesi-siang',
+    name: 'Sesi Siang (Jam 4-5)',
+    code: 'SESI-2',
+    timeRange: '10:15 - 12:00 WIB',
+    startTime: '10:15',
+    endTime: '12:00',
+  },
+  {
+    id: 'sesi-sore',
+    name: 'Sesi Sore & Ekstrakurikuler (Jam 6-7)',
+    code: 'SESI-3',
+    timeRange: '12:30 - 15:00 WIB',
+    startTime: '12:30',
+    endTime: '15:00',
+  },
+  {
+    id: 'sesi-harian',
+    name: 'Absensi Harian Terpadu',
+    code: 'HARIAN',
+    timeRange: 'Sepanjang Hari Sekolah (07:30 - 15:00 WIB)',
+    startTime: '07:30',
+    endTime: '15:00',
+  },
 ];
 
 export const INITIAL_STUDENTS: Student[] = [
@@ -481,7 +525,7 @@ export function getInitialTeacherAttendanceRecords(): TeacherAttendanceRecord[] 
       percentage: 100.0,
     },
     createdByUserId: 'user-kepsek-shohibul',
-    createdByUserName: 'Shohibul Kahfi, M.Pd',
+    createdByUserName: 'SHOHIBUL KAHFI, M.Pd',
     createdRole: 'kepala_sekolah',
     createdAt: `${yesterdayStr}T07:05:00Z`,
     updatedAt: `${yesterdayStr}T07:05:00Z`,
